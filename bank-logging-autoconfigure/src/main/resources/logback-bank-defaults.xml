@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<included>
+    <springProperty scope="context" name="SERVICE_NAME" source="spring.application.name" defaultValue="unknown-service"/>
+    
+    <property name="CONSOLE_PATTERN" value="%d{HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) [%X{correlation_id:-}] - %msg%n"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="com.bank.logging.masking.MaskingPatternLayout">
+                <pattern>${CONSOLE_PATTERN}</pattern>
+            </layout>
+        </encoder>
+    </appender>
+
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="com.bank.logging.masking.MaskingJsonLayout">
+                <serviceName>${SERVICE_NAME}</serviceName>
+                <environment>dev</environment>
+                <includeStackTrace>true</includeStackTrace>
+                <includeMdc>true</includeMdc>
+                <maskingEnabled>true</maskingEnabled>
+            </layout>
+        </encoder>
+    </appender>
+
+    <logger name="AUDIT" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <logger name="com.bank.logging" level="INFO"/>
+    <logger name="org.springframework" level="WARN"/>
+</included>

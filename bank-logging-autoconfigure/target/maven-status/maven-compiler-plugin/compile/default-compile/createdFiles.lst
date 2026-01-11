@@ -1,0 +1,11 @@
+com\bank\logging\autoconfigure\LoggingProperties$CorrelationProperties.class
+com\bank\logging\autoconfigure\LoggingProperties$PropagationProperties.class
+com\bank\logging\autoconfigure\LoggingProperties$MaskingProperties.class
+com\bank\logging\autoconfigure\LoggingAutoConfiguration$FeignAutoConfiguration.class
+com\bank\logging\autoconfigure\LoggingAutoConfiguration$RestTemplateAutoConfiguration.class
+com\bank\logging\autoconfigure\LoggingAutoConfiguration$AspectAutoConfiguration.class
+com\bank\logging\autoconfigure\LoggingProperties$AspectProperties.class
+com\bank\logging\autoconfigure\LoggingProperties.class
+com\bank\logging\autoconfigure\LoggingAutoConfiguration$WebClientAutoConfiguration.class
+com\bank\logging\autoconfigure\LoggingAutoConfiguration$ServletAutoConfiguration.class
+com\bank\logging\autoconfigure\LoggingAutoConfiguration.class
