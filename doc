@@ -1,0 +1,316 @@
+Présentation du Projet
+Bank Logging Spring Boot Starter
+Solution de Logging Centralisé pour Microservices Bancaires
+1. 🎯 Contexte et Problématique
+Situation actuelle
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         PROBLÈMES ACTUELS                               │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ❌ Chaque microservice implémente son propre logging                   │
+│  ❌ Pas de standard de format de logs                                   │
+│  ❌ Données sensibles exposées dans les logs (PAN, IBAN, emails...)    │
+│  ❌ Impossible de tracer une transaction à travers les services        │
+│  ❌ Code métier pollué par du code de logging                          │
+│  ❌ Pas d'audit trail pour la conformité                               │
+│  ❌ Duplication de code entre les équipes                              │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+Exigences réglementaires
+Réglementation
+Exigence
+RGPD
+Données personnelles ne doivent pas être loggées en clair
+PCI-DSS
+Numéros de carte (PAN) doivent être masqués
+Audit interne
+Traçabilité complète des opérations sensibles
+2. 💡 Solution Proposée
+Spring Boot Starter personnalisé
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         SOLUTION                                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ✅ UN starter unique pour TOUS les microservices                       │
+│  ✅ Masquage automatique RGPD/PCI-DSS                                   │
+│  ✅ Correlation ID pour traçabilité distribuée                          │
+│  ✅ Logging AOP non-intrusif                                            │
+│  ✅ Format JSON pour ELK/Splunk                                         │
+│  ✅ Audit trail automatique                                             │
+│  ✅ Zero-configuration (auto-configuration Spring Boot)                 │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+3. 🏗️ Architecture Technique
+Vue d'ensemble
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        ARCHITECTURE MODULES                             │
+└─────────────────────────────────────────────────────────────────────────┘
+
+                    bank-logging-parent (POM parent)
+                              │
+            ┌─────────────────┼─────────────────┐
+            │                 │                 │
+            ▼                 ▼                 ▼
+    ┌───────────────┐ ┌───────────────┐ ┌───────────────────────┐
+    │bank-logging-  │ │bank-logging-  │ │bank-logging-spring-   │
+    │core           │ │autoconfigure  │ │boot-starter           │
+    │               │ │               │ │                       │
+    │• Annotations  │ │• Auto-config  │ │• Agrégateur de        │
+    │• DataMasker   │ │• Properties   │ │  dépendances          │
+    │• Aspect AOP   │ │• Logback      │ │                       │
+    │• Filter MDC   │ │  defaults     │ │                       │
+    │• Propagation  │ │               │ │                       │
+    └───────────────┘ └───────────────┘ └───────────────────────┘
+            │                 │                 │
+            └─────────────────┴─────────────────┘
+                              │
+                              ▼
+                    ┌───────────────────┐
+                    │ Microservice      │
+                    │ (1 dépendance)    │
+                    └───────────────────┘
+Intégration dans l'écosystème
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     FLUX DE TRAÇABILITÉ                                 │
+└─────────────────────────────────────────────────────────────────────────┘
+
+   Client                Service A              Service B              Service C
+     │                      │                      │                      │
+     │  X-Correlation-ID    │                      │                      │
+     │  (généré si absent)  │                      │                      │
+     │─────────────────────>│                      │                      │
+     │                      │                      │                      │
+     │                      │  X-Correlation-ID    │                      │
+     │                      │  (propagé)           │                      │
+     │                      │─────────────────────>│                      │
+     │                      │                      │                      │
+     │                      │                      │  X-Correlation-ID    │
+     │                      │                      │  (propagé)           │
+     │                      │                      │─────────────────────>│
+     │                      │                      │                      │
+
+                              │
+                              ▼
+              ┌───────────────────────────────┐
+              │      Elasticsearch / ELK      │
+              │                               │
+              │  correlation_id: "abc-123"    │
+              │  → Tous les logs de la        │
+              │    transaction en 1 requête   │
+              └───────────────────────────────┘
+4. 📦 Composants Techniques
+4.1 Masquage RGPD/PCI-DSS
+// AVANT (données exposées)
+log.info("Paiement carte: 4532015112830366, IBAN: FR7630006000011234567890189");
+
+// APRÈS (données masquées automatiquement)
+log.info("Paiement carte: 453201******0366, IBAN: FR76************0189");
+Type de donnée
+Pattern détecté
+Masquage appliqué
+PAN (carte)
+4532015112830366
+453201******0366
+IBAN
+FR7630006000011234567890189
+FR76************0189
+Email
+jean.dupont@email.com
+j***@email.com
+Téléphone
++33612345678
++336******78
+CVV
+123
+***
+4.2 Correlation ID (Traçabilité distribuée)
+┌────────────────────────────────────────────────────────────────────────┐
+│  HTTP Request arrive                                                   │
+│  Header: X-Correlation-ID: abc-123-def                                 │
+└────────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│  CorrelationIdFilter (intercepte TOUTES les requêtes)                  │
+│                                                                        │
+│  MDC.put("correlation_id", "abc-123-def")                              │
+│  MDC.put("client_ip", "192.168.1.100")                                 │
+│  MDC.put("user_id", "jean.dupont")                                     │
+│  MDC.put("request_uri", "/api/v1/transfers")                           │
+└────────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│  TOUS les logs de cette requête contiennent automatiquement:           │
+│                                                                        │
+│  {                                                                     │
+│    "correlation_id": "abc-123-def",                                    │
+│    "client_ip": "192.168.1.100",                                       │
+│    "user_id": "jean.dupont",                                           │
+│    "message": "..."                                                    │
+│  }                                                                     │
+└────────────────────────────────────────────────────────────────────────┘
+4.3 Logging AOP (non-intrusif)
+// AVANT : Code pollué par le logging
+public TransferResult executeTransfer(TransferRequest request) {
+    String operationId = UUID.randomUUID().toString();
+    MDC.put("operation", "SEPA_TRANSFER");
+    MDC.put("operation_id", operationId);
+    long startTime = System.nanoTime();
+    
+    try {
+        log.info("ENTRY: operation=SEPA_TRANSFER, params={}", maskParams(request));
+        
+        // Code métier
+        TransferResult result = doTransfer(request);
+        
+        long duration = (System.nanoTime() - startTime) / 1_000_000;
+        log.info("EXIT: operation=SEPA_TRANSFER, duration={}ms", duration);
+        auditLog.info("AUDIT: operation=SEPA_TRANSFER, status=SUCCESS");
+        
+        return result;
+    } catch (Exception e) {
+        log.error("ERROR: operation=SEPA_TRANSFER", e);
+        auditLog.info("AUDIT: operation=SEPA_TRANSFER, status=FAILURE");
+        throw e;
+    } finally {
+        MDC.remove("operation");
+        MDC.remove("operation_id");
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+
+// APRÈS : Code propre avec @PaymentLog
+@PaymentLog(operation = "SEPA_TRANSFER", auditEnabled = true)
+public TransferResult executeTransfer(TransferRequest request) {
+    // Uniquement le code métier !
+    return doTransfer(request);
+}
+4.4 Format de sortie JSON (ELK-ready)
+{
+  "@timestamp": "2024-01-15T14:32:45.123+01:00",
+  "level": "INFO",
+  "service": "payment-service",
+  "environment": "prod",
+  "version": "1.0.0",
+  "logger": "com.bank.payment.service.PaymentService",
+  "thread": "http-nio-8080-exec-1",
+  "context": {
+    "correlation_id": "abc-123-def",
+    "transaction_id": "TXN-12345678",
+    "user_id": "jean.dupont@bank.com",
+    "client_ip": "192.168.1.100",
+    "operation": "SEPA_TRANSFER",
+    "request_uri": "/api/v1/transfers"
+  },
+  "message": "Payment completed: amount=1500.00 EUR, creditor=FR76************0189"
+}
+5. 🔌 Intégration pour les équipes
+Ce que chaque équipe doit faire
+<!-- 1. Ajouter UNE dépendance dans pom.xml -->
+<dependency>
+    <groupId>com.bank</groupId>
+    <artifactId>bank-logging-spring-boot-starter</artifactId>
+    <version>1.0.0</version>
+</dependency>
+# 2. Configurer le nom du service (application.yml)
+spring:
+  application:
+    name: mon-service
+// 3. (Optionnel) Annoter les méthodes critiques
+@PaymentLog(operation = "MON_OPERATION", auditEnabled = true)
+public Result maMethode(Request request) {
+    // Code métier uniquement
+}
+C'est tout ! Tout le reste est automatique.
+6. 📊 Bénéfices
+Comparaison Avant/Après
+Aspect
+Avant
+Après
+Conformité RGPD
+❌ Manuel, risque d'oubli
+✅ Automatique, garanti
+Conformité PCI-DSS
+❌ Manuel, risque d'oubli
+✅ Automatique, garanti
+Traçabilité
+❌ Impossible cross-services
+✅ Correlation ID bout-en-bout
+Code métier
+❌ Pollué par logging
+✅ Propre, annotations déclaratives
+Maintenance
+❌ N implémentations
+✅ 1 starter centralisé
+Onboarding équipes
+❌ Chaque équipe réinvente
+✅ 1 dépendance, 0 config
+Format logs
+❌ Hétérogène
+✅ JSON standardisé
+Monitoring ELK
+❌ Difficile à exploiter
+✅ Requêtes simples
+Gains quantifiables
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         GAINS ESTIMÉS                                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ⏱️  Temps d'intégration par service : 2 jours → 30 minutes            │
+│                                                                         │
+│  📉  Lignes de code logging par service : ~500 → ~10                   │
+│                                                                         │
+│  🔒  Risque de fuite de données : Élevé → Quasi nul                    │
+│                                                                         │
+│  🔍  Temps de debug cross-services : Heures → Minutes                  │
+│                                                                         │
+│  📋  Audit de conformité : Complexe → Simple (logs standardisés)       │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+7. 🛠️ Stack Technique
+Composant
+Technologie
+Version
+Java
+OpenJDK
+21
+Framework
+Spring Boot
+3.4.x
+AOP
+AspectJ
+1.9.22
+Logging
+Logback
+1.5.x
+Sérialisation
+Jackson
+2.18.x
+Build
+Maven
+3.8+
+Compatibilité
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        COMPATIBILITÉ                                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ✅ Spring Boot 3.2.x, 3.3.x, 3.4.x                                    │
+│  ✅ Java 21+                                                            │
+│  ✅ Applications Servlet (Spring MVC)                                   │
+│  ✅ Applications Reactive (Spring WebFlux)                              │
+│  ✅ Feign Client                                                        │
+│  ✅ RestTemplate                                                        │
+│  ✅ WebClient                                                           │
+│  ✅ Kafka (propagation manuelle)                                        │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+8. 📈 Roadmap
+Phase 1 : MVP (Sprint actuel)
+[x] Masquage RGPD (PAN, IBAN, Email, Téléphone)
+[x] Correlation ID Filter
+[x] Aspect AOP @PaymentLog
+[x] Format JSON pour ELK
+[x] Auto-configuration Spring Boot
+[x] Documentation
