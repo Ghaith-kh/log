@@ -1,0 +1,23 @@
+# application.yml du service cible
+bank:
+  logging:
+    enabled: true
+
+    masking:
+      enabled: true
+
+    aspect:
+      enabled: true
+      performance-threshold-ms: 500
+
+    correlation:
+      enabled: true
+      header-name: X-Correlation-ID
+      generate-if-missing: true
+
+    # NOUVEAU : Configuration de la propagation
+    propagation:
+      rest-template: true    # Activer pour RestTemplate
+      rest-client: true      # Activer pour RestClient (Spring 3.2+)
+      web-client: true       # Activer pour WebClient
+      feign: true            # Activer pour Feign

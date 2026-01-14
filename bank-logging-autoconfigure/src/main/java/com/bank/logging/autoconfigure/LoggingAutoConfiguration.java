@@ -4,6 +4,7 @@ import com.bank.logging.aspect.PaymentLoggingAspect;
 import com.bank.logging.filter.CorrelationIdFilter;
 import com.bank.logging.masking.DataMasker;
 import com.bank.logging.propagation.FeignCorrelationInterceptor;
+import com.bank.logging.propagation.RestClientCorrelationInterceptor;
 import com.bank.logging.propagation.RestTemplateCorrelationInterceptor;
 import com.bank.logging.propagation.WebClientCorrelationFilter;
 import org.slf4j.Logger;
@@ -93,6 +94,19 @@ public class LoggingAutoConfiguration {
             aspect.setDefaultPerformanceThresholdMs(properties.getAspect().getPerformanceThresholdMs());
             log.info("Configured PaymentLoggingAspect with threshold={}ms", properties.getAspect().getPerformanceThresholdMs());
             return aspect;
+        }
+    }
+
+    @Configuration
+    @ConditionalOnClass(name = "org.springframework.web.client.RestClient")
+    @ConditionalOnProperty(prefix = "bank.logging.propagation", name = "rest-client", havingValue = "true", matchIfMissing = true)
+    public class RestClientAutoConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean
+        public RestClientCorrelationInterceptor restClientCorrelationInterceptor() {
+            log.info(" RestClientCorrelationInterceptor created");
+            return new RestClientCorrelationInterceptor();
         }
     }
 

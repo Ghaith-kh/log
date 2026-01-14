@@ -49,19 +49,6 @@ public class LoggingProperties {
         public void setIncludeRequestUri(boolean includeRequestUri) { this.includeRequestUri = includeRequestUri; }
     }
 
-    public static class PropagationProperties {
-        private boolean restTemplate = true;
-        private boolean webClient = true;
-        private boolean feign = true;
-
-        public boolean isRestTemplate() { return restTemplate; }
-        public void setRestTemplate(boolean restTemplate) { this.restTemplate = restTemplate; }
-        public boolean isWebClient() { return webClient; }
-        public void setWebClient(boolean webClient) { this.webClient = webClient; }
-        public boolean isFeign() { return feign; }
-        public void setFeign(boolean feign) { this.feign = feign; }
-    }
-
     // Getters and setters
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
@@ -77,4 +64,21 @@ public class LoggingProperties {
     public void setCorrelation(CorrelationProperties correlation) { this.correlation = correlation; }
     public PropagationProperties getPropagation() { return propagation; }
     public void setPropagation(PropagationProperties propagation) { this.propagation = propagation; }
+
+    public static class PropagationProperties {
+        private boolean restTemplate = true;
+        private boolean restClient = true;
+        private boolean webClient = true;
+        private boolean feign = true;
+
+        public boolean isRestTemplate() { return restTemplate; }
+        public void setRestTemplate(boolean restTemplate) { this.restTemplate = restTemplate; }
+        public boolean isRestClient() { return restClient; }
+        public void setRestClient(boolean restClient) { this.restClient = restClient; }
+        public boolean isWebClient() { return webClient; }
+        public void setWebClient(boolean webClient) { this.webClient = webClient; }
+        public boolean isFeign() { return feign; }
+        public void setFeign(boolean feign) { this.feign = feign; }
+    }
+
 }
